@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background: #0a2540;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .logout-btn {
+            background: #d4af37;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #0a2540;
+            color: white;
+        }
+        .add-btn {
+            background: #d4af37;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Express Waybil - Admin</h2>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    <div class="container">
+        <button class="add-btn" onclick="addShipment()">+ Add Shipment</button>
+         <table>
+            <thead>
+                <tr><th>Tracking</th><th>Customer</th><th>Origin</th><th>Destination</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+         </table>
+    </div>
+    <script>
+        if (!localStorage.getItem('adminLoggedIn')) window.location.href = '/admin.html';
+        
+        let shipments = JSON.parse(localStorage.getItem('myShipments')) || [
+            { tracking: "EXW12345", customer: "John Smith", origin: "New York", destination: "Los Angeles", status: "delivered" },
+            { tracking: "EXW67890", customer: "Sarah Johnson", origin: "London", destination: "Dubai", status: "in_transit" },
+            { tracking: "EXW99999", customer: "Yuki Tanaka", origin: "Tokyo", destination: "Osaka", status: "delivered" }
+        ];
+
+        function save() {
+            localStorage.setItem('myShipments', JSON.stringify(shipments));
+            render();
+        }
+
+        function render() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            shipments.forEach((s, i) => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = s.tracking;
+                row.insertCell(1).innerText = s.customer;
+                row.insertCell(2).innerText = s.origin;
+                row.insertCell(3).innerText = s.destination;
+                row.insertCell(4).innerText = s.status;
+                const btn = document.createElement('button');
+                btn.innerText = 'Delete';
+                btn.className = 'delete-btn';
+                btn.onclick = () => { shipments.splice(i,1); save(); };
+                row.insertCell(5).appendChild(btn);
+            });
+        }
+
+        function addShipment() {
+            const tracking = prompt('Tracking number (e.g., EXW88888)');
+            if (!tracking) return;
+            const customer = prompt('Customer name');
+            if (!customer) return;
+            shipments.push({ tracking: tracking.toUpperCase(), customer, origin: "New", destination: "City", status: "pending" });
+            save();
+        }
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            window.location.href = '/admin.html';
+        }
+
+        render();
+    </script>
+</body>
+</html>
