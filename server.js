@@ -3,12 +3,21 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// IMPORTANT: Serve files from public directory
+// Serve files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Send index.html for root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Admin pages
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin-dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
 // Tracking data
@@ -95,6 +104,7 @@ const shipments = {
     }
 };
 
+// API route for tracking
 app.get('/api/track/:number', (req, res) => {
     const trackingNumber = req.params.number.toUpperCase();
     const shipment = shipments[trackingNumber];
@@ -102,10 +112,11 @@ app.get('/api/track/:number', (req, res) => {
     if (shipment) {
         res.json(shipment);
     } else {
-        res.status(404).json({ error: "Shipment not found. Try: EXW12345, EXW67890, EXW99999, EXW77777, EXW55555" });
+        res.status(404).json({ error: "Shipment not found" });
     }
 });
 
+// Start server
 app.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
 });
