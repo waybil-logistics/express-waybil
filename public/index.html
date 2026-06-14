@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Express Waybil - Track Your Shipment</title>
+    <title>Express Waybil - Global Logistics</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -16,10 +16,41 @@
             background: linear-gradient(135deg, #0a2540 0%, #1a4a6f 100%);
             min-height: 100vh;
         }
+        body.rtl {
+            direction: rtl;
+        }
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+        }
+        /* Language Bar */
+        .lang-bar {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        .lang-btn {
+            background: none;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .lang-btn:hover, .lang-btn.active {
+            background: #d4af37;
+            color: #0a2540;
         }
         .header {
             background: rgba(255,255,255,0.95);
@@ -107,6 +138,7 @@
         .status-delivered { background: #4caf50; color: white; }
         .status-intransit { background: #ff9800; color: white; }
         .status-pending { background: #ffc107; color: #333; }
+        .status-cancelled { background: #f44336; color: white; }
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -122,30 +154,50 @@
             gap: 12px;
         }
         .info-item i { color: #d4af37; font-size: 24px; }
+        .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d4af37;
+        }
         @media (max-width: 768px) {
             .hero h1 { font-size: 32px; }
             .tracking-box { flex-direction: column; }
+            .lang-bar { gap: 5px; }
+            .lang-btn { padding: 5px 10px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Language Bar -->
+        <div class="lang-bar">
+            <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+            <button class="lang-btn" data-lang="ar">🇸🇦 العربية</button>
+            <button class="lang-btn" data-lang="fr">🇫🇷 Français</button>
+            <button class="lang-btn" data-lang="es">🇪🇸 Español</button>
+            <button class="lang-btn" data-lang="de">🇩🇪 Deutsch</button>
+            <button class="lang-btn" data-lang="ja">🇯🇵 日本語</button>
+            <button class="lang-btn" data-lang="zh">🇨🇳 中文</button>
+            <button class="lang-btn" data-lang="ru">🇷🇺 Русский</button>
+            <button class="lang-btn" data-lang="tr">🇹🇷 Türkçe</button>
+        </div>
+
         <div class="header">
             <div class="logo"><i class="fas fa-box"></i> Express <span>Waybil</span></div>
             <div class="nav-links">
-                <a href="#">Home</a>
-                <a href="#">Track</a>
-                <a href="#">Services</a>
-                <a href="/admin.html">Admin</a>
+                <a href="#" data-key="home">Home</a>
+                <a href="#" data-key="track">Track</a>
+                <a href="#" data-key="services">Services</a>
+                <a href="/admin.html" data-key="admin">Admin</a>
             </div>
         </div>
 
         <div class="hero">
-            <h1>Fast, Secure & Global Logistics Solutions</h1>
-            <p>Real-time tracking • Worldwide coverage • 24/7 Support</p>
+            <h1 data-key="hero_title">Fast, Secure & Global Logistics Solutions</h1>
+            <p data-key="hero_subtitle">Real-time tracking • Worldwide coverage • 24/7 Support</p>
             <div class="tracking-box">
                 <input type="text" id="trackingInput" placeholder="Enter tracking number (EXW12345, EXW67890, EXW99999)">
-                <button onclick="trackShipment()"><i class="fas fa-search"></i> Track Shipment</button>
+                <button onclick="trackShipment()" data-key="track_btn"><i class="fas fa-search"></i> Track Shipment</button>
             </div>
         </div>
 
@@ -153,47 +205,73 @@
     </div>
 
     <script>
-        async function trackShipment() {
-            const trackingNumber = document.getElementById('trackingInput').value.toUpperCase();
-            if (!trackingNumber) {
-                alert('Please enter a tracking number');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/track/${trackingNumber}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    displayResult(data);
-                } else {
-                    document.getElementById('resultCard').innerHTML = `<div style="text-align:center;padding:40px;"><h2>❌ Shipment Not Found</h2><p>Try: EXW12345, EXW67890, or EXW99999</p></div>`;
-                    document.getElementById('resultCard').style.display = 'block';
-                }
-            } catch (error) {
-                document.getElementById('resultCard').innerHTML = `<div style="text-align:center;padding:40px;"><h2>❌ Error</h2><p>Please try again</p></div>`;
-                document.getElementById('resultCard').style.display = 'block';
-            }
+        // Translations for 15 languages
+        const translations = {
+            en: { home: "Home", track: "Track", services: "Services", admin: "Admin", hero_title: "Fast, Secure & Global Logistics Solutions", hero_subtitle: "Real-time tracking • Worldwide coverage • 24/7 Support", track_btn: "Track Shipment", status: "Status", tracking: "Tracking", sender: "Sender", receiver: "Receiver", route: "Route", amount: "Amount", due: "Due", from: "From", to: "To", not_found: "Shipment Not Found" },
+            ar: { home: "الرئيسية", track: "تتبع", services: "الخدمات", admin: "المشرف", hero_title: "حلول لوجستية سريعة وآمنة وعالمية", hero_subtitle: "تتبع فوري • تغطية عالمية • دعم 24/7", track_btn: "تتبع الشحنة", status: "الحالة", tracking: "رقم التتبع", sender: "المرسل", receiver: "المستلم", route: "المسار", amount: "المبلغ", due: "مستحق", from: "من", to: "إلى", not_found: "الشحنة غير موجودة" },
+            fr: { home: "Accueil", track: "Suivi", services: "Services", admin: "Admin", hero_title: "Solutions logistiques rapides, sécurisées et mondiales", hero_subtitle: "Suivi en temps réel • Couverture mondiale • Support 24/7", track_btn: "Suivre le colis", status: "Statut", tracking: "Numéro de suivi", sender: "Expéditeur", receiver: "Destinataire", route: "Itinéraire", amount: "Montant", due: "Dû", from: "De", to: "À", not_found: "Colis non trouvé" },
+            es: { home: "Inicio", track: "Rastrear", services: "Servicios", admin: "Admin", hero_title: "Soluciones logísticas rápidas, seguras y globales", hero_subtitle: "Seguimiento en tiempo real • Cobertura mundial • Soporte 24/7", track_btn: "Rastrear Envío", status: "Estado", tracking: "Número de seguimiento", sender: "Remitente", receiver: "Destinatario", route: "Ruta", amount: "Monto", due: "Debido", from: "De", to: "A", not_found: "Envío no encontrado" },
+            de: { home: "Startseite", track: "Verfolgen", services: "Dienstleistungen", admin: "Admin", hero_title: "Schnelle, sichere und globale Logistiklösungen", hero_subtitle: "Echtzeitverfolgung • Weltweite Abdeckung • 24/7 Support", track_btn: "Sendung verfolgen", status: "Status", tracking: "Sendungsnummer", sender: "Absender", receiver: "Empfänger", route: "Route", amount: "Betrag", due: "Fällig", from: "Von", to: "Nach", not_found: "Sendung nicht gefunden" },
+            ja: { home: "ホーム", track: "追跡", services: "サービス", admin: "管理者", hero_title: "高速・安全・グローバル物流ソリューション", hero_subtitle: "リアルタイム追跡 • 世界的なカバレッジ • 24時間サポート", track_btn: "貨物を追跡", status: "ステータス", tracking: "追跡番号", sender: "送り主", receiver: "受取人", route: "ルート", amount: "金額", due: "支払予定", from: "から", to: "へ", not_found: "貨物が見つかりません" },
+            zh: { home: "首页", track: "追踪", services: "服务", admin: "管理", hero_title: "快速、安全、全球物流解决方案", hero_subtitle: "实时追踪 • 全球覆盖 • 24/7支持", track_btn: "追踪货物", status: "状态", tracking: "追踪号码", sender: "发件人", receiver: "收件人", route: "路线", amount: "金额", due: "应付", from: "从", to: "到", not_found: "未找到货物" },
+            ru: { home: "Главная", track: "Отследить", services: "Услуги", admin: "Админ", hero_title: "Быстрые, безопасные и глобальные логистические решения", hero_subtitle: "Отслеживание в реальном времени • Глобальное покрытие • Поддержка 24/7", track_btn: "Отследить отправление", status: "Статус", tracking: "Номер отслеживания", sender: "Отправитель", receiver: "Получатель", route: "Маршрут", amount: "Сумма", due: "К оплате", from: "От", to: "До", not_found: "Отправление не найдено" },
+            tr: { home: "Ana Sayfa", track: "Takip", services: "Hizmetler", admin: "Admin", hero_title: "Hızlı, Güvenli ve Küresel Lojistik Çözümleri", hero_subtitle: "Gerçek zamanlı takip • Dünya çapında kapsama • 7/24 Destek", track_btn: "Gönderiyi Takip Et", status: "Durum", tracking: "Takip Numarası", sender: "Gönderen", receiver: "Alıcı", route: "Güzergah", amount: "Tutar", due: "Ödenecek", from: "Nereden", to: "Nereye", not_found: "Gönderi bulunamadı" }
+        };
+
+        let currentLang = 'en';
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
+            });
+            if (currentLang === 'ar') document.body.classList.add('rtl');
+            else document.body.classList.remove('rtl');
         }
 
-        function displayResult(s) {
-            const statusClass = s.status === 'delivered' ? 'status-delivered' : (s.status === 'in_transit' ? 'status-intransit' : 'status-pending');
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentLang = btn.getAttribute('data-lang');
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyLanguage();
+            });
+        });
+        document.querySelector('.lang-btn').classList.add('active');
+
+        const shipments = {
+            "EXW12345": { trackingNumber: "EXW12345", sender: { name: "John Smith", email: "john@email.com", phone: "+1 555 123 4567", address: "NYC" }, receiver: { name: "Robert Brown", email: "robert@email.com", phone: "+1 555 987 6543", address: "LA" }, from: { country: "USA", city: "New York" }, to: { country: "USA", city: "Los Angeles" }, status: "delivered", amount: 250, currency: "USD" },
+            "EXW67890": { trackingNumber: "EXW67890", sender: { name: "Sarah Johnson", email: "sarah@email.com", phone: "+44 20 7946 0123", address: "London" }, receiver: { name: "Ahmed Ali", email: "ahmed@email.com", phone: "+971 50 123 4567", address: "Dubai" }, from: { country: "UK", city: "London" }, to: { country: "UAE", city: "Dubai" }, status: "in_transit", amount: 180, currency: "GBP" },
+            "EXW99999": { trackingNumber: "EXW99999", sender: { name: "Yuki Tanaka", email: "yuki@email.com", phone: "+81 3 1234 5678", address: "Tokyo" }, receiver: { name: "Kenji Sato", email: "kenji@email.com", phone: "+81 6 9876 5432", address: "Osaka" }, from: { country: "Japan", city: "Tokyo" }, to: { country: "Japan", city: "Osaka" }, status: "delivered", amount: 12000, currency: "JPY" }
+        };
+
+        async function trackShipment() {
+            const trackingNumber = document.getElementById('trackingInput').value.toUpperCase();
+            if (!trackingNumber) { alert('Enter tracking number'); return; }
+            const shipment = shipments[trackingNumber];
+            if (!shipment) {
+                document.getElementById('resultCard').innerHTML = `<div style="text-align:center;padding:40px;"><h2>❌ ${translations[currentLang].not_found}</h2><p>EXW12345, EXW67890, EXW99999</p></div>`;
+                document.getElementById('resultCard').style.display = 'block';
+                return;
+            }
+            const statusClass = `status-${shipment.status === 'in_transit' ? 'intransit' : shipment.status}`;
+            const currencySymbols = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", AED: "د.إ", SAR: "﷼", NGN: "₦", ZAR: "R", INR: "₹" };
+            const symbol = currencySymbols[shipment.currency] || "$";
             document.getElementById('resultCard').innerHTML = `
-                <h2><i class="fas fa-box"></i> Shipment Status</h2>
-                <div class="status-badge ${statusClass}">${s.status.toUpperCase()}</div>
+                <h2><i class="fas fa-box"></i> ${translations[currentLang].status}</h2>
+                <div class="status-badge ${statusClass}">${shipment.status.toUpperCase()}</div>
                 <div class="info-grid">
-                    <div class="info-item"><i class="fas fa-hashtag"></i><div><strong>Tracking:</strong><br>${s.trackingNumber}</div></div>
-                    <div class="info-item"><i class="fas fa-user"></i><div><strong>Customer:</strong><br>${s.customerName}</div></div>
-                    <div class="info-item"><i class="fas fa-map-marker-alt"></i><div><strong>From:</strong><br>${s.origin?.city || 'N/A'}</div></div>
-                    <div class="info-item"><i class="fas fa-flag-checkered"></i><div><strong>To:</strong><br>${s.destination?.city || 'N/A'}</div></div>
+                    <div class="info-item"><i class="fas fa-hashtag"></i><div><strong>${translations[currentLang].tracking}:</strong><br>${shipment.trackingNumber}</div></div>
+                    <div class="info-item"><i class="fas fa-user"></i><div><strong>${translations[currentLang].sender}:</strong><br>${shipment.sender.name}<br><small>${shipment.sender.email}</small></div></div>
+                    <div class="info-item"><i class="fas fa-user-check"></i><div><strong>${translations[currentLang].receiver}:</strong><br>${shipment.receiver.name}<br><small>${shipment.receiver.email}</small></div></div>
+                    <div class="info-item"><i class="fas fa-map-marker-alt"></i><div><strong>${translations[currentLang].route}:</strong><br>${shipment.from.city} → ${shipment.to.city}</div></div>
+                    <div class="info-item"><i class="fas fa-money-bill-wave"></i><div><strong>${translations[currentLang].amount}:</strong><br><span class="amount">${symbol}${shipment.amount}</span></div></div>
                 </div>
             `;
             document.getElementById('resultCard').style.display = 'block';
         }
-
-        document.getElementById('trackingInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') trackShipment();
-        });
+        document.getElementById('trackingInput').addEventListener('keypress', e => e.key === 'Enter' && trackShipment());
+        applyLanguage();
     </script>
 </body>
 </html>
